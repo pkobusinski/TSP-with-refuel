@@ -69,9 +69,13 @@ void cleanup() {
     free(gas_stations);
 }
 
-void shuffle(int* array, int size) {
-    for (int i = size - 1; i > 0; i--) {
-        int j = rand() % (i + 1);
+void shuffle(int* array, int size, int keep_from_start, int keep_from_end) {
+    if (keep_from_start + keep_from_end >= size) {
+        return;
+    }
+
+    for (int i = keep_from_start; i < size - keep_from_end - 1; i++) {
+        int j = keep_from_start + rand() % (size - keep_from_end - keep_from_start - 1);
         int temp = array[i];
         array[i] = array[j];
         array[j] = temp;
@@ -159,6 +163,7 @@ int random_greedy_tsp(int* path, int fuel) {
     int* unvisited_cities = (int*)malloc(N * sizeof(int));
     int* error_path = (int*)malloc((N + 1) * sizeof(int));
     fill_array_with_indices(error_path, N + 1);
+    shuffle(error_path, N + 1, 1, 1);
     int current_city = 0;
     int current_fuel = fuel;
     int path_length = 0;
@@ -186,7 +191,7 @@ int random_greedy_tsp(int* path, int fuel) {
             available_cities[0] = 0;
         }
 
-        shuffle(available_cities, available_count);
+        shuffle(available_cities, available_count, 0, 0);
 
         int next_city = available_cities[0];
         path[i] = next_city;
@@ -406,7 +411,6 @@ void printData(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
     }
     printf("}\n");
 }
-
 
 int main() {
     srand(time(NULL));
