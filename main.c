@@ -7,15 +7,69 @@
 #include "cJSON.h"
 
 
-#define N 5  // Liczba miast
-#define IT 10
+int N, IT;
+int** tsp;
+int* gas_stations;
+int start_fuel;
+cJSON* root; // Assuming you have a global cJSON root variable
 
-int tsp[N][N];
-int gas_stations[N];
-int start_fuel = 40;
+void initialize() {
+    // Read data from a JSON file
+    const char* jsonFilename = "data.json";
+    FILE* jsonFile;
+    errno_t err;
 
+    if ((err = fopen_s(&jsonFile, jsonFilename, "r")) != 0) {
+        printf("Failed to open JSON file\n");
+        exit(1);
+    }
 
-void shuffle(int array[N], int size) {              // funkcja potrzebna do random_greedy_tsp 
+    char buffer[1024];
+    size_t length;
+    length = fread(buffer, 1, sizeof(buffer), jsonFile);
+
+    fclose(jsonFile);
+
+    root = cJSON_Parse(buffer);
+    if (!root) {
+        printf("Error parsing JSON.\n");
+        exit(1);
+    }
+
+    // Read N, IT, and start_fuel from the JSON file
+    N = cJSON_GetObjectItem(root, "N")->valueint;
+    IT = cJSON_GetObjectItem(root, "IT")->valueint;
+    start_fuel = cJSON_GetObjectItem(root, "start_fuel")->valueint;
+
+    // Dynamic memory allocation for tsp and gas_stations
+    tsp = (int**)malloc(N * sizeof(int*));
+    gas_stations = (int*)malloc(N * sizeof(int));
+    for (int i = 0; i < N; i++) {
+        tsp[i] = (int*)malloc(N * sizeof(int));
+    }
+
+    cJSON* tspArray = cJSON_GetObjectItem(root, "tsp");
+    cJSON* gasStationsArray = cJSON_GetObjectItem(root, "gas_stations");
+
+    for (int i = 0; i < N; i++) {
+        cJSON* row = cJSON_GetArrayItem(tspArray, i); // Pobierz i-ty wiersz z tablicy tsp
+        for (int j = 0; j < N; j++) {
+            tsp[i][j] = cJSON_GetArrayItem(row, j)->valueint; // Pobierz j-tą wartość z i-tego wiersza
+        }
+        gas_stations[i] = cJSON_GetArrayItem(gasStationsArray, i)->valueint;
+    }
+}
+
+void cleanup() {
+    // Free allocated memory
+    for (int i = 0; i < N; i++) {
+        free(tsp[i]);
+    }
+    free(tsp);
+    free(gas_stations);
+}
+
+void shuffle(int* array, int size) {
     for (int i = size - 1; i > 0; i--) {
         int j = rand() % (i + 1);
         int temp = array[i];
@@ -24,29 +78,27 @@ void shuffle(int array[N], int size) {              // funkcja potrzebna do rand
     }
 }
 
-void copy_array(int source[], int destination[], int length) {
+void copy_array(int* source, int* destination, int length) {
     for (int i = 0; i < length; i++) {
         destination[i] = source[i];
     }
-
 }
 
 int can_reach_gas_station(int current_fuel, int distance, int station_fuel) {
     return current_fuel >= distance ;
 }
 
-int greedy_tsp(int path[N+1], int fuel) {
-
-    int unvisited_cities[N];
+int greedy_tsp(int* path, int fuel) {
+    int* unvisited_cities = (int*)malloc(N * sizeof(int));
     int current_city = 0;
     int current_fuel = fuel;
     int path_length = 0;
 
     for (int i = 0; i < N; i++) {
-        unvisited_cities[i] = 1;               
+        unvisited_cities[i] = 1;
     }
 
-    unvisited_cities[current_city] = 0; 
+    unvisited_cities[current_city] = 0;
     path[0] = current_city;
 
     for (int i = 1; i < N; i++) {
@@ -83,10 +135,13 @@ int greedy_tsp(int path[N+1], int fuel) {
     path_length += tsp[current_city][0];
 
     for (int i = 0; i < N; i++) {
-        if (unvisited_cities[i] == 1)
+        if (unvisited_cities[i] == 1) {
+            free(unvisited_cities); // Zwolnij dynamicznie alokowaną tablicę
             return 0;
+        }
     }
 
+    free(unvisited_cities);
     return path_length;
 }
 
@@ -100,23 +155,23 @@ void fill_array_with_indices(int array[], int length) {
     array[length - 1] = 0;
 }
 
-int random_greedy_tsp(int path[N+1], int fuel) {
-    int unvisited_cities[N];
-    int error_path[N + 1];
+int random_greedy_tsp(int* path, int fuel) {
+    int* unvisited_cities = (int*)malloc(N * sizeof(int));
+    int* error_path = (int*)malloc((N + 1) * sizeof(int));
     fill_array_with_indices(error_path, N + 1);
     int current_city = 0;
     int current_fuel = fuel;
     int path_length = 0;
 
     for (int i = 0; i < N; i++) {
-        unvisited_cities[i] = 1; 
+        unvisited_cities[i] = 1;
     }
 
-    unvisited_cities[current_city] = 0; 
+    unvisited_cities[current_city] = 0;
     path[0] = current_city;
 
     for (int i = 1; i < N; i++) {
-        int available_cities[N];
+        int* available_cities = (int*)malloc(N * sizeof(int)); // Dynamicznie alokowana tablica
         int available_count = 0;
 
         for (int j = 0; j < N; j++) {
@@ -140,6 +195,8 @@ int random_greedy_tsp(int path[N+1], int fuel) {
         current_fuel -= tsp[current_city][next_city];
         current_fuel += gas_stations[next_city];
         current_city = next_city;
+
+        free(available_cities); // Zwolnienie dynamicznie alokowanej tablicy
     }
 
     path[N] = 0;
@@ -147,20 +204,26 @@ int random_greedy_tsp(int path[N+1], int fuel) {
 
     if (!can_reach_gas_station(current_fuel, tsp[current_city][0], gas_stations[0])) {
         copy_array(error_path, path, N + 1);
+        free(unvisited_cities);
+        free(error_path);
         return 0;
     }
 
     for (int i = 0; i < N; i++) {
         if (unvisited_cities[i] == 1 || current_fuel < 0) {
             copy_array(error_path, path, N + 1);
+            free(unvisited_cities);
+            free(error_path);
             return 0;
         }
     }
 
+    free(unvisited_cities);
+    free(error_path);
     return path_length;
 }
 
-void generatePermutations(int step, int length, int path[N], int unvisited[N], int* min_path_length, int best_path[N + 1], int* fuel, int tsp[N][N], int gas_stations[N]) {
+void generatePermutations(int step, int length, int* path, int* unvisited, int* min_path_length, int* best_path, int* fuel, int** tsp, int* gas_stations) {
     if (step == N) {
         length += tsp[path[N - 1]][0];
         if (length < *min_path_length) {
@@ -178,34 +241,34 @@ void generatePermutations(int step, int length, int path[N], int unvisited[N], i
     }
 
     for (int i = 1; i < N; i++) {
-        if (unvisited[i] && can_reach_gas_station(*fuel, tsp[path[step-1]][i], gas_stations[i])) {//tsp[path[step - 1]][i] <= *fuel) {
+        if (unvisited[i] && can_reach_gas_station(*fuel, tsp[path[step - 1]][i], gas_stations[i])) {
             path[step] = i;
-            unvisited[i] = false;
+            unvisited[i] = 0;
             int prev_fuel = *fuel; // Zapamiętaj ilość paliwa przed przejazdem
             *fuel -= tsp[path[step - 1]][i]; // Aktualizacja ilości paliwa
             *fuel += gas_stations[i];
 
             generatePermutations(step + 1, length + tsp[path[step - 1]][i], path, unvisited, min_path_length, best_path, fuel, tsp, gas_stations);
 
-            unvisited[i] = true;
+            unvisited[i] = 1;
             *fuel = prev_fuel; // Przywróć ilość paliwa po powrocie
         }
     }
 }
 
-int bruteforce_tsp(int path[N + 1], int fuel) {
-    int local_path[N];
-    int unvisited[N];
-    int best_path[N + 1];
+int bruteforce_tsp(int* path, int fuel) {
+    int* local_path = (int*)malloc(N * sizeof(int));
+    int* unvisited = (int*)malloc(N * sizeof(int));
+    int* best_path = (int*)malloc((N + 1) * sizeof(int));
     int min_path_length = INT_MAX;
     int current_fuel = fuel;
 
     for (int i = 0; i < N; i++) {
-        unvisited[i] = true;
+        unvisited[i] = 1;
     }
 
     local_path[0] = 0;
-    unvisited[0] = false;
+    unvisited[0] = 0;
 
     generatePermutations(1, 0, local_path, unvisited, &min_path_length, best_path, &current_fuel, tsp, gas_stations);
 
@@ -213,18 +276,22 @@ int bruteforce_tsp(int path[N + 1], int fuel) {
         path[i] = best_path[i];
     }
 
-    for (int i = 1; i < N + 1; i++)
-    {
+    for (int i = 1; i < N + 1; i++) {
         if (path[i] == path[i - 1]) {
-
+            free(local_path);
+            free(unvisited);
+            free(best_path);
             return 0;
         }
     }
 
+    free(local_path);
+    free(unvisited);
+    free(best_path);
     return min_path_length;
 }
 
-bool check_if_route_ok(int path[N + 1],int gas_stations[N], int fuel) {
+bool check_if_route_ok(int* path,int* gas_stations, int fuel) {
     int current_fuel = fuel;
 
     for (int i = 0; i < N; i++) {
@@ -243,7 +310,7 @@ bool check_if_route_ok(int path[N + 1],int gas_stations[N], int fuel) {
     return true;  // Trasa jest wykonalna z dostępnym paliwem
 }
 
-int calculate_path_length(int path[N + 1],int gas_stations[N], int fuel) {
+int calculate_path_length(int* path,int* gas_stations, int fuel) {
     
     int length = 0;
     for (int i = 1; i < N + 1; i++) {
@@ -276,9 +343,9 @@ void change_path(int source[], int destination[], int length) {
     destination[index2] = temp;
 }
 
-int meta_local_search_tsp(int path[N + 1], int fuel) {
-    int current_path[N + 1]; 
-    int alternate_path[N + 1];
+int meta_local_search_tsp(int* path, int fuel) {
+    int* current_path = (int*)malloc((N + 1) * sizeof(int));
+    int* alternate_path = (int*)malloc((N + 1) * sizeof(int));
     copy_array(path, current_path, N + 1);
     int length = calculate_path_length(current_path, gas_stations, fuel);
 
@@ -286,7 +353,7 @@ int meta_local_search_tsp(int path[N + 1], int fuel) {
         change_path(current_path, alternate_path, N + 1);
         //print_array(alternate_path, N + 1);
         if (check_if_route_ok(alternate_path, gas_stations, fuel)) {
-            int alternate_length = calculate_path_length(alternate_path,gas_stations, fuel);
+            int alternate_length = calculate_path_length(alternate_path, gas_stations, fuel);
             //printf(" : %d\n", alternate_length);
             if (alternate_length < length) {
                 length = alternate_length;
@@ -295,44 +362,60 @@ int meta_local_search_tsp(int path[N + 1], int fuel) {
         }
     }
 
+    copy_array(current_path, path, N + 1);
 
-    copy_array(current_path, path, N+1);
-
-    if (length == INT_MAX)
+    if (length == INT_MAX) {
+        free(alternate_path);
+        free(current_path);
         return 0;
+    }
 
+    free(alternate_path);
+    free(current_path);
     return length;
 }
 
-int main() {
-        
-    srand(time(NULL)); 
+void printData(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
+    printf("N = %d\n", N);
+    printf("IT = %d\n", IT);
+    printf("start_fuel = %d\n", start_fuel);
 
-    int graph[N][N] = {
-        {0, 10, 15, 20, 25},
-        {10, 0, 35, 25, 30},
-        {15, 35, 0, 30, 20},
-        {20, 25, 30, 0, 10},
-        {25, 30, 20, 10, 0}
-    };
-
-
+    printf("tsp = {\n");
     for (int i = 0; i < N; i++) {
+        printf("    {");
         for (int j = 0; j < N; j++) {
-            tsp[i][j] = graph[i][j];
+            printf("%d", tsp[i][j]);
+            if (j < N - 1) {
+                printf(", ");
+            }
+        }
+        printf("}");
+        if (i < N - 1) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("}\n");
+
+    printf("gas_stations = {");
+    for (int i = 0; i < N; i++) {
+        printf("%d", gas_stations[i]);
+        if (i < N - 1) {
+            printf(", ");
         }
     }
+    printf("}\n");
+}
 
-    for (int i = 0; i < N; i++) {
-        gas_stations[i] = 0;
-    }
 
-    gas_stations[3] = 50;
-    gas_stations[2] = 20;
+int main() {
+    srand(time(NULL));
 
-    int path[N + 1]; // +1 na powrót do miasta początkowego
-    int r_greedy_path[N + 1];
+    initialize(); // Initialize the program with dynamic memory allocation
 
+    int* path = (int*)malloc((N + 1) * sizeof(int)); // +1 for the return to the starting city
+    int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
+    //printData(tsp, gas_stations, N, IT, start_fuel);
     int path_length = greedy_tsp(path, start_fuel);
     printf("Najkrótsza ścieżka GREEDY to: ");
     for (int i = 0; i < N + 1; i++) {
@@ -362,6 +445,10 @@ int main() {
     }
     printf("\nDługość: %d\n", path_length);
 
+    // Clean up dynamically allocated memory
+    free(path);
+    free(r_greedy_path);
+    cleanup(); // Free memory allocated in the initialize function
 
     return 0;
 }

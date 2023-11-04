@@ -128,7 +128,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cJSON.c" />
-    <ClCompile Include="generator.cpp" />
     <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
