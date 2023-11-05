@@ -1,0 +1,24 @@
+{
+	"algorithm":	"GreedyTSP",
+	"path":	[0, 2, 4, 6, 1, 5, 3, 0],
+	"path_length":	1003,
+	"N":	8
+}
+{
+	"algorithm":	"RandomGreedyTSP",
+	"path":	[0, 2, 1, 5, 3, 4, 6, 0],
+	"path_length":	1209,
+	"N":	8
+}
+{
+	"algorithm":	"BruteForceTSP",
+	"path":	[0, 2, 4, 6, 5, 3, 1, 0],
+	"path_length":	882,
+	"N":	8
+}
+{
+	"algorithm":	"MetaTSP",
+	"path":	[0, 2, 6, 5, 3, 4, 1, 0],
+	"path_length":	1586,
+	"N":	8
+}

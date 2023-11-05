@@ -11,10 +11,10 @@ int N, IT;
 int** tsp;
 int* gas_stations;
 int start_fuel;
-cJSON* root; // Assuming you have a global cJSON root variable
+cJSON* root; 
 
 void initialize() {
-    // Read data from a JSON file
+    
     const char* jsonFilename = "data.json";
     FILE* jsonFile;
     errno_t err;
@@ -45,12 +45,10 @@ void initialize() {
         exit(1);
     }
 
-    // Read N, IT, and start_fuel from the JSON file
     N = cJSON_GetObjectItem(root, "N")->valueint;
     IT = cJSON_GetObjectItem(root, "IT")->valueint;
     start_fuel = cJSON_GetObjectItem(root, "start_fuel")->valueint;
 
-    // Dynamic memory allocation for tsp and gas_stations
     tsp = (int**)malloc(N * sizeof(int*));
     gas_stations = (int*)malloc(N * sizeof(int));
     for (int i = 0; i < N; i++) {
@@ -61,18 +59,17 @@ void initialize() {
     cJSON* gasStationsArray = cJSON_GetObjectItem(root, "gas_stations");
 
     for (int i = 0; i < N; i++) {
-        cJSON* row = cJSON_GetArrayItem(tspArray, i); // Pobierz i-ty wiersz z tablicy tsp
+        cJSON* row = cJSON_GetArrayItem(tspArray, i); 
         for (int j = 0; j < N; j++) {
-            tsp[i][j] = cJSON_GetArrayItem(row, j)->valueint; // Pobierz j-tą wartość z i-tego wiersza
+            tsp[i][j] = cJSON_GetArrayItem(row, j)->valueint; 
         }
         gas_stations[i] = cJSON_GetArrayItem(gasStationsArray, i)->valueint;
     }
 
-    free(buffer); // Zwolnij pamięć bufora JSON
+    free(buffer); 
 }
 
 void cleanup() {
-    // Free allocated memory
     for (int i = 0; i < N; i++) {
         free(tsp[i]);
     }
@@ -81,10 +78,8 @@ void cleanup() {
 }
 
 void shuffle(int* array, int size, int keep_from_start, int keep_from_end) {
-    if (keep_from_start + keep_from_end >= size) {
+    if (keep_from_start + keep_from_end >= size) 
         return;
-    }
-
     for (int i = keep_from_start; i < size - keep_from_end - 1; i++) {
         int j = keep_from_start + rand() % (size - keep_from_end - keep_from_start - 1);
         int temp = array[i];
@@ -133,7 +128,6 @@ int greedy_tsp(int* path, int fuel) {
         }
 
         if (next_city == -1) {
-            // brak dostępnych miast, powrót do miasta początkowego
             next_city = 0;
             min_cost = tsp[current_city][0];
         }
@@ -187,7 +181,7 @@ int random_greedy_tsp(int* path, int fuel) {
     path[0] = current_city;
 
     for (int i = 1; i < N; i++) {
-        int* available_cities = (int*)malloc(N * sizeof(int)); // Dynamicznie alokowana tablica
+        int* available_cities = (int*)malloc(N * sizeof(int)); 
         int available_count = 0;
 
         for (int j = 0; j < N; j++) {
@@ -198,7 +192,6 @@ int random_greedy_tsp(int* path, int fuel) {
         }
 
         if (available_count == 0) {
-            // Brak dostępnych miast, powrót do miasta początkowego
             available_cities[0] = 0;
         }
 
@@ -212,7 +205,7 @@ int random_greedy_tsp(int* path, int fuel) {
         current_fuel += gas_stations[next_city];
         current_city = next_city;
 
-        free(available_cities); // Zwolnienie dynamicznie alokowanej tablicy
+        free(available_cities); 
     }
 
     path[N] = 0;
@@ -243,7 +236,6 @@ void generatePermutations(int step, int length, int* path, int* unvisited, int* 
     if (step == N) {
         length += tsp[path[N - 1]][0];
         if (length < *min_path_length) {
-            // Sprawdź, czy paliwo pozwala na powrót
             int required_fuel = tsp[path[N - 1]][0];
             if (*fuel >= required_fuel) {
                 *min_path_length = length;
@@ -255,19 +247,16 @@ void generatePermutations(int step, int length, int* path, int* unvisited, int* 
         }
         return;
     }
-
     for (int i = 1; i < N; i++) {
         if (unvisited[i] && can_reach_gas_station(*fuel, tsp[path[step - 1]][i], gas_stations[i])) {
             path[step] = i;
             unvisited[i] = 0;
-            int prev_fuel = *fuel; // Zapamiętaj ilość paliwa przed przejazdem
-            *fuel -= tsp[path[step - 1]][i]; // Aktualizacja ilości paliwa
+            int prev_fuel = *fuel;
+            *fuel -= tsp[path[step - 1]][i]; 
             *fuel += gas_stations[i];
-
             generatePermutations(step + 1, length + tsp[path[step - 1]][i], path, unvisited, min_path_length, best_path, fuel, tsp, gas_stations);
-
             unvisited[i] = 1;
-            *fuel = prev_fuel; // Przywróć ilość paliwa po powrocie
+            *fuel = prev_fuel; 
         }
     }
 }
@@ -312,22 +301,18 @@ bool check_if_route_ok(int* path,int* gas_stations, int fuel) {
 
     for (int i = 0; i < N; i++) {
         if (current_fuel < tsp[path[i]][path[i + 1]]) {
-            return false;  // Brak wystarczającej ilości paliwa na odcinku między miastami
+            return false;  
         }
-        current_fuel -= tsp[path[i]][path[i + 1]];  // Zużywanie paliwa na danym odcinku
-
-        current_fuel += gas_stations[path[i + 1]];  // Dodanie paliwa z bieżącej stacji
+        current_fuel -= tsp[path[i]][path[i + 1]];  
+        current_fuel += gas_stations[path[i + 1]];  
     }
-
-    // Sprawdzamy, czy można wrócić do miasta początkowego
     if (current_fuel < tsp[path[N]][path[0]]) {
-        return false;  // Brak wystarczającej ilości paliwa na ostatnim odcinku
+        return false; 
     }
-    return true;  // Trasa jest wykonalna z dostępnym paliwem
+    return true;  
 }
 
 int calculate_path_length(int* path,int* gas_stations, int fuel) {
-    
     int length = 0;
     for (int i = 1; i < N + 1; i++) {
         length += tsp[path[i]][path[i - 1]];
@@ -341,19 +326,14 @@ int calculate_path_length(int* path,int* gas_stations, int fuel) {
 }
 
 void change_path(int source[], int destination[], int length) {
-    // Inicjalizacja tablicy destination tak samo jak source
     for (int i = 0; i < length; i++) {
         destination[i] = source[i];
     }
-
-    // Wybieranie dwóch losowych indeksów do zamiany
     int index1, index2;
     do {
-        index1 = 1 + rand() % (length - 2);  // Wybieramy losowy indeks (z wyjątkiem pierwszego i ostatniego)
+        index1 = 1 + rand() % (length - 2);  
         index2 = 1 + rand() % (length - 2);
     } while (index1 == index2);
-
-    // Zamiana miejscami dwóch wybranych indeksów
     int temp = destination[index1];
     destination[index1] = destination[index2];
     destination[index2] = temp;
@@ -367,10 +347,8 @@ int meta_local_search_tsp(int* path, int fuel) {
 
     for (int i = 0; i < IT; i++) {
         change_path(current_path, alternate_path, N + 1);
-        //print_array(alternate_path, N + 1);
         if (check_if_route_ok(alternate_path, gas_stations, fuel)) {
             int alternate_length = calculate_path_length(alternate_path, gas_stations, fuel);
-            //printf(" : %d\n", alternate_length);
             if (alternate_length < length) {
                 length = alternate_length;
                 copy_array(alternate_path, current_path, N + 1);
@@ -391,7 +369,7 @@ int meta_local_search_tsp(int* path, int fuel) {
     return length;
 }
 
-void printData(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
+void print_data(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
     printf("N = %d\n", N);
     printf("IT = %d\n", IT);
     printf("start_fuel = %d\n", start_fuel);
@@ -423,47 +401,71 @@ void printData(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
     printf("}\n");
 }
 
+void saveResultToFile(const char* algorithm, int* path, int path_length, int N) {
+    cJSON* results = cJSON_CreateObject();
+    cJSON_AddStringToObject(results, "algorithm", algorithm);
+    cJSON* pathArray = cJSON_CreateArray();
+    for (int i = 0; i < N; i++) {
+        cJSON_AddItemToArray(pathArray, cJSON_CreateNumber(path[i]));
+    }
+    cJSON_AddItemToObject(results, "path", pathArray);
+    cJSON_AddNumberToObject(results, "path_length", path_length);
+    cJSON_AddNumberToObject(results, "N", N);    
+
+    char* json_str = cJSON_Print(results);
+
+    FILE* file;
+    if (fopen_s(&file, "results.json", "a") == 0) { 
+        fputs(json_str, file);
+        fputs("\n", file); 
+        fclose(file);
+        printf("Zapisano wynik dla algorytmu %s.\n", algorithm);
+    }
+    else {
+        fprintf(stderr, "Błąd podczas zapisywania pliku results.json.\n");
+    }
+
+    cJSON_Delete(results); 
+    free(json_str);
+}
+
+void solve_and_save_results() {
+
+    FILE* clear_file;
+    if (fopen_s(&clear_file, "results.json", "w") == 0) {
+        printf("Plik results.json został wygenerowany.\n");
+        fclose(clear_file);
+    }
+    else {
+        fprintf(stderr, "Błąd podczas czyszczenia pliku results.json.\n");
+    }
+
+    int* path = (int*)malloc((N + 1) * sizeof(int)); 
+    int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
+
+    int path_length = greedy_tsp(path, start_fuel);
+    saveResultToFile("GreedyTSP", path, path_length, N+1);
+
+    path_length = random_greedy_tsp(path, start_fuel);
+    for (int i = 0; i < N + 1; i++) {
+        r_greedy_path[i] = path[i];
+    }
+    saveResultToFile("RandomGreedyTSP", path, path_length, N+1);
+
+    path_length = bruteforce_tsp(path, start_fuel);
+    saveResultToFile("BruteForceTSP", path, path_length, N+1);
+
+    path_length = meta_local_search_tsp(r_greedy_path, start_fuel);
+    saveResultToFile("MetaTSP", r_greedy_path, path_length, N+1);
+    free(path);
+    free(r_greedy_path);
+}
+
 int main() {
     srand(time(NULL));
     generator();
-    initialize(); // Initialize the program with dynamic memory allocation
-
-    int* path = (int*)malloc((N + 1) * sizeof(int)); // +1 for the return to the starting city
-    int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
-    //printData(tsp, gas_stations, N, IT, start_fuel);
-    int path_length = greedy_tsp(path, start_fuel);
-    printf("Najkrótsza ścieżka GREEDY to: ");
-    for (int i = 0; i < N + 1; i++) {
-        printf("%d -> ", path[i]);
-    }
-    printf("\nDługość: %d\n", path_length);
-
-    path_length = random_greedy_tsp(path, start_fuel);
-    printf("Najkrótsza ścieżka GREEDY MIXED to: ");
-    for (int i = 0; i < N + 1; i++) {
-        printf("%d -> ", path[i]);
-        r_greedy_path[i] = path[i];
-    }
-    printf("\nDługość: %d\n", path_length);
-
-    path_length = bruteforce_tsp(path, start_fuel);
-    printf("Najkrótsza ścieżka BRUTEFORCE to: ");
-    for (int i = 0; i < N + 1; i++) {
-        printf("%d -> ", path[i]);
-    }
-    printf("\nDługość: %d\n", path_length);
-
-    path_length = meta_local_search_tsp(r_greedy_path, start_fuel);
-    printf("Najkrótsza ścieżka META to: ");
-    for (int i = 0; i < N + 1; i++) {
-        printf("%d -> ", r_greedy_path[i]);
-    }
-    printf("\nDługość: %d\n", path_length);
-
-    // Clean up dynamically allocated memory
-    free(path);
-    free(r_greedy_path);
-    cleanup(); // Free memory allocated in the initialize function
-
+    initialize(); 
+    solve_and_save_results();
+    cleanup(); 
     return 0;
 }

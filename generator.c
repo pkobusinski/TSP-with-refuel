@@ -4,16 +4,16 @@
 #include "cJSON.h"
 
 int generator() {
-    srand(time(NULL)); // Inicjalizacja generatora liczb losowych
+    srand(time(NULL)); 
 
-    int N = 13;//rand() % 51 + 50; // Losowa wartość N od 5 do 10
+    int N = rand() % 9 + 5;     // losowa liczba miast od 5 do 14
     int min_distance = INT_MAX;
 
     cJSON* root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "N", N);
     cJSON_AddNumberToObject(root, "IT", 100);
 
-    // Generuj odległości między miastami
+    
     cJSON* tsp = cJSON_AddArrayToObject(root, "tsp");
     for (int i = 0; i < N; i++) {
         cJSON* row = cJSON_CreateArray();
@@ -31,13 +31,14 @@ int generator() {
         }
     }
 
-    // Generuj począkową ilość paliwa większą lub równą minimalnej odległości między miastami
-    int start_fuel = rand() % (600 - min_distance + 1) + min_distance;
+    int fuel_for_one_trip = min_distance * 2;
+    int start_fuel = fuel_for_one_trip + rand() % (250 - fuel_for_one_trip + 1); // Losowa ilość paliwa od minimalnej do 250
+
     cJSON_AddNumberToObject(root, "start_fuel", start_fuel);
 
     cJSON* gas_stations = cJSON_AddArrayToObject(root, "gas_stations");
     for (int i = 0; i < N; i++) {
-        int gas = rand() % (51 - start_fuel + 1) + start_fuel; // Losowa ilość paliwa większa lub równa początkowej ilości paliwa
+        int gas = start_fuel + rand() % (251 - start_fuel); // Losowa ilość paliwa większa lub równa początkowej ilości paliwa
         cJSON_AddItemToArray(gas_stations, cJSON_CreateNumber(gas));
     }
 
@@ -53,7 +54,7 @@ int generator() {
         fprintf(stderr, "Błąd podczas tworzenia pliku data.json.\n");
     }
 
-    cJSON_Delete(root); // Zwolnienie zasobów cJSON
+    cJSON_Delete(root); 
     free(json_str);
     return 0;
 }
