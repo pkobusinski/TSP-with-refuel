@@ -5,7 +5,7 @@
 #include <math.h>
 #include <time.h>
 #include "cJSON.h"
-
+#include "generator.h"
 
 int N, IT;
 int** tsp;
@@ -24,9 +24,18 @@ void initialize() {
         exit(1);
     }
 
-    char buffer[1024];
-    size_t length;
-    length = fread(buffer, 1, sizeof(buffer), jsonFile);
+    fseek(jsonFile, 0, SEEK_END);
+    long file_size = ftell(jsonFile);
+    rewind(jsonFile);
+
+    char* buffer = (char*)malloc(file_size + 1);
+    if (buffer == NULL) {
+        printf("Failed to allocate memory for JSON buffer\n");
+        exit(1);
+    }
+
+    size_t length = fread(buffer, 1, file_size, jsonFile);
+    buffer[length] = '\0';
 
     fclose(jsonFile);
 
@@ -58,6 +67,8 @@ void initialize() {
         }
         gas_stations[i] = cJSON_GetArrayItem(gasStationsArray, i)->valueint;
     }
+
+    free(buffer); // Zwolnij pamięć bufora JSON
 }
 
 void cleanup() {
@@ -414,7 +425,7 @@ void printData(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
 
 int main() {
     srand(time(NULL));
-
+    generator();
     initialize(); // Initialize the program with dynamic memory allocation
 
     int* path = (int*)malloc((N + 1) * sizeof(int)); // +1 for the return to the starting city
