@@ -77,6 +77,38 @@ void cleanup() {
     free(gas_stations);
 }
 
+void print_data(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
+    printf("N = %d\n", N);
+    printf("IT = %d\n", IT);
+    printf("start_fuel = %d\n", start_fuel);
+
+    printf("tsp = {\n");
+    for (int i = 0; i < N; i++) {
+        printf("    {");
+        for (int j = 0; j < N; j++) {
+            printf("%d", tsp[i][j]);
+            if (j < N - 1) {
+                printf(", ");
+            }
+        }
+        printf("}");
+        if (i < N - 1) {
+            printf(",");
+        }
+        printf("\n");
+    }
+    printf("}\n");
+
+    printf("gas_stations = {");
+    for (int i = 0; i < N; i++) {
+        printf("%d", gas_stations[i]);
+        if (i < N - 1) {
+            printf(", ");
+        }
+    }
+    printf("}\n");
+}
+
 void shuffle(int* array, int size, int keep_from_start, int keep_from_end) {
     if (keep_from_start + keep_from_end >= size) 
         return;
@@ -96,6 +128,59 @@ void copy_array(int* source, int* destination, int length) {
 
 int can_reach_gas_station(int current_fuel, int distance, int station_fuel) {
     return current_fuel >= distance ;
+}
+
+void fill_array_with_indices(int array[], int length) {
+
+    for (int i = 1; i < length - 1; i++) {
+        array[i] = i;
+    }
+
+    array[0] = 0;
+    array[length - 1] = 0;
+}
+
+bool check_if_route_ok(int* path, int* gas_stations, int fuel) {
+    int current_fuel = fuel;
+
+    for (int i = 0; i < N; i++) {
+        if (current_fuel < tsp[path[i]][path[i + 1]]) {
+            return false;
+        }
+        current_fuel -= tsp[path[i]][path[i + 1]];
+        current_fuel += gas_stations[path[i + 1]];
+    }
+    if (current_fuel < tsp[path[N]][path[0]]) {
+        return false;
+    }
+    return true;
+}
+
+int calculate_path_length(int* path, int* gas_stations, int fuel) {
+    int length = 0;
+    for (int i = 1; i < N + 1; i++) {
+        length += tsp[path[i]][path[i - 1]];
+        if (path[i] == path[i - 1])
+            return INT_MAX;
+    }
+    if (!check_if_route_ok(path, gas_stations, fuel))
+        return INT_MAX;
+    else
+        return length;
+}
+
+void change_path(int source[], int destination[], int length) {
+    for (int i = 0; i < length; i++) {
+        destination[i] = source[i];
+    }
+    int index1, index2;
+    do {
+        index1 = 1 + rand() % (length - 2);
+        index2 = 1 + rand() % (length - 2);
+    } while (index1 == index2);
+    int temp = destination[index1];
+    destination[index1] = destination[index2];
+    destination[index2] = temp;
 }
 
 int greedy_tsp(int* path, int fuel) {
@@ -152,16 +237,6 @@ int greedy_tsp(int* path, int fuel) {
 
     free(unvisited_cities);
     return path_length;
-}
-
-void fill_array_with_indices(int array[], int length) {
-
-    for (int i = 1; i < length - 1; i++) {
-        array[i] = i;
-    }
-
-    array[0] = 0;
-    array[length - 1] = 0;
 }
 
 int random_greedy_tsp(int* path, int fuel) {
@@ -296,49 +371,6 @@ int bruteforce_tsp(int* path, int fuel) {
     return min_path_length;
 }
 
-bool check_if_route_ok(int* path,int* gas_stations, int fuel) {
-    int current_fuel = fuel;
-
-    for (int i = 0; i < N; i++) {
-        if (current_fuel < tsp[path[i]][path[i + 1]]) {
-            return false;  
-        }
-        current_fuel -= tsp[path[i]][path[i + 1]];  
-        current_fuel += gas_stations[path[i + 1]];  
-    }
-    if (current_fuel < tsp[path[N]][path[0]]) {
-        return false; 
-    }
-    return true;  
-}
-
-int calculate_path_length(int* path,int* gas_stations, int fuel) {
-    int length = 0;
-    for (int i = 1; i < N + 1; i++) {
-        length += tsp[path[i]][path[i - 1]];
-        if (path[i] == path[i - 1])
-            return INT_MAX;
-    }
-    if (!check_if_route_ok(path, gas_stations, fuel))
-        return INT_MAX;
-    else
-        return length;
-}
-
-void change_path(int source[], int destination[], int length) {
-    for (int i = 0; i < length; i++) {
-        destination[i] = source[i];
-    }
-    int index1, index2;
-    do {
-        index1 = 1 + rand() % (length - 2);  
-        index2 = 1 + rand() % (length - 2);
-    } while (index1 == index2);
-    int temp = destination[index1];
-    destination[index1] = destination[index2];
-    destination[index2] = temp;
-}
-
 int meta_local_search_tsp(int* path, int fuel) {
     int* current_path = (int*)malloc((N + 1) * sizeof(int));
     int* alternate_path = (int*)malloc((N + 1) * sizeof(int));
@@ -367,38 +399,6 @@ int meta_local_search_tsp(int* path, int fuel) {
     free(alternate_path);
     free(current_path);
     return length;
-}
-
-void print_data(int** tsp, int* gas_stations, int N, int IT, int start_fuel) {
-    printf("N = %d\n", N);
-    printf("IT = %d\n", IT);
-    printf("start_fuel = %d\n", start_fuel);
-
-    printf("tsp = {\n");
-    for (int i = 0; i < N; i++) {
-        printf("    {");
-        for (int j = 0; j < N; j++) {
-            printf("%d", tsp[i][j]);
-            if (j < N - 1) {
-                printf(", ");
-            }
-        }
-        printf("}");
-        if (i < N - 1) {
-            printf(",");
-        }
-        printf("\n");
-    }
-    printf("}\n");
-
-    printf("gas_stations = {");
-    for (int i = 0; i < N; i++) {
-        printf("%d", gas_stations[i]);
-        if (i < N - 1) {
-            printf(", ");
-        }
-    }
-    printf("}\n");
 }
 
 void saveResultToFile(const char* algorithm, int* path, int path_length, int N) {

@@ -1,24 +1,24 @@
 {
 	"algorithm":	"GreedyTSP",
-	"path":	[0, 2, 4, 6, 1, 5, 3, 0],
-	"path_length":	1003,
-	"N":	8
+	"path":	[0, 1, 4, 3, 2, 0],
+	"path_length":	591,
+	"N":	6
 }
 {
 	"algorithm":	"RandomGreedyTSP",
-	"path":	[0, 2, 1, 5, 3, 4, 6, 0],
-	"path_length":	1209,
-	"N":	8
+	"path":	[0, 1, 3, 2, 4, 0],
+	"path_length":	701,
+	"N":	6
 }
 {
 	"algorithm":	"BruteForceTSP",
-	"path":	[0, 2, 4, 6, 5, 3, 1, 0],
-	"path_length":	882,
-	"N":	8
+	"path":	[0, 1, 4, 3, 2, 0],
+	"path_length":	591,
+	"N":	6
 }
 {
 	"algorithm":	"MetaTSP",
-	"path":	[0, 2, 6, 5, 3, 4, 1, 0],
-	"path_length":	1586,
-	"N":	8
+	"path":	[0, 1, 2, 3, 4, 0],
+	"path_length":	780,
+	"N":	6
 }
