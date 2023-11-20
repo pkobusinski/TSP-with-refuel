@@ -4,14 +4,19 @@
 #include <stdbool.h>
 #include <math.h>
 #include <time.h>
+
+#include "zen_timer.h"
+
 #include "cJSON.h"
 #include "generator.h"
+
 
 int N, IT;
 int** tsp;
 int* gas_stations;
 int start_fuel;
 cJSON* root; 
+
 
 void initialize() {
     
@@ -184,6 +189,7 @@ void change_path(int source[], int destination[], int length) {
 }
 
 int greedy_tsp(int* path, int fuel) {
+    
     int* unvisited_cities = (int*)malloc(N * sizeof(int));
     int current_city = 0;
     int current_fuel = fuel;
@@ -242,6 +248,8 @@ int greedy_tsp(int* path, int fuel) {
 int random_greedy_tsp(int* path, int fuel) {
     int* unvisited_cities = (int*)malloc(N * sizeof(int));
     int* error_path = (int*)malloc((N + 1) * sizeof(int));
+    int* test_path = (int*)malloc((N + 1) * sizeof(int));
+
     fill_array_with_indices(error_path, N + 1);
     shuffle(error_path, N + 1, 1, 1);
     int current_city = 0;
@@ -286,6 +294,14 @@ int random_greedy_tsp(int* path, int fuel) {
     path[N] = 0;
     path_length += tsp[current_city][0];
 
+    //copy_array(path, test_path, N+1);
+
+    //for (int i = 0; i < N+1; i++)
+    //{
+    //    printf("%d,",path[i]);
+    //}
+    //printf("\n");
+
     if (!can_reach_gas_station(current_fuel, tsp[current_city][0], gas_stations[0])) {
         copy_array(error_path, path, N + 1);
         free(unvisited_cities);
@@ -301,7 +317,8 @@ int random_greedy_tsp(int* path, int fuel) {
             return 0;
         }
     }
-
+    //copy_array(test_path, path, N + 1);
+   // printf("\n");
     free(unvisited_cities);
     free(error_path);
     return path_length;
@@ -401,7 +418,7 @@ int meta_local_search_tsp(int* path, int fuel) {
     return length;
 }
 
-void saveResultToFile(const char* algorithm, int* path, int path_length, int N) {
+void saveResultToFile(const char* algorithm, int* path, int path_length, int N, int64_t time) {
     cJSON* results = cJSON_CreateObject();
     cJSON_AddStringToObject(results, "algorithm", algorithm);
     cJSON* pathArray = cJSON_CreateArray();
@@ -410,8 +427,11 @@ void saveResultToFile(const char* algorithm, int* path, int path_length, int N) 
     }
     cJSON_AddItemToObject(results, "path", pathArray);
     cJSON_AddNumberToObject(results, "path_length", path_length);
-    cJSON_AddNumberToObject(results, "N", N);    
-
+    cJSON_AddNumberToObject(results, "N", N-1);   
+    
+ 
+    cJSON_AddNumberToObject(results, "time", time);
+   
     char* json_str = cJSON_Print(results);
 
     FILE* file;
@@ -429,6 +449,7 @@ void saveResultToFile(const char* algorithm, int* path, int path_length, int N) 
     free(json_str);
 }
 
+
 void solve_and_save_results() {
 
     FILE* clear_file;
@@ -442,21 +463,31 @@ void solve_and_save_results() {
 
     int* path = (int*)malloc((N + 1) * sizeof(int)); 
     int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
-
+       
+    zen_timer_t timer = ZenTimer_Start();
     int path_length = greedy_tsp(path, start_fuel);
-    saveResultToFile("GreedyTSP", path, path_length, N+1);
+    int64_t time = ZenTimer_End(&timer);
+    saveResultToFile("GreedyTSP", path, path_length, N+1, time);
 
+    zen_timer_t timer_2 = ZenTimer_Start();
     path_length = random_greedy_tsp(path, start_fuel);
+    int64_t time_2 = ZenTimer_End(&timer_2);
     for (int i = 0; i < N + 1; i++) {
         r_greedy_path[i] = path[i];
     }
-    saveResultToFile("RandomGreedyTSP", path, path_length, N+1);
 
-    path_length = bruteforce_tsp(path, start_fuel);
-    saveResultToFile("BruteForceTSP", path, path_length, N+1);
+    saveResultToFile("RandomGreedyTSP", path, path_length, N+1, time_2);
 
+    zen_timer_t timer_3 = ZenTimer_Start();
     path_length = meta_local_search_tsp(r_greedy_path, start_fuel);
-    saveResultToFile("MetaTSP", r_greedy_path, path_length, N+1);
+    int64_t time_3 = ZenTimer_End(&timer_3);
+    saveResultToFile("MetaTSP", r_greedy_path, path_length, N+1, time_3);
+
+    zen_timer_t timer_4 = ZenTimer_Start();
+    path_length = bruteforce_tsp(path, start_fuel);
+    int64_t time_4 = ZenTimer_End(&timer_4);
+    saveResultToFile("BruteForceTSP", path, path_length, N + 1, time_4);
+
     free(path);
     free(r_greedy_path);
 }
@@ -465,6 +496,7 @@ int main() {
     srand(time(NULL));
     generator();
     initialize(); 
+    //print_data(tsp, gas_stations, N, IT, start_fuel);
     solve_and_save_results();
     cleanup(); 
     return 0;

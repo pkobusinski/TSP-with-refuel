@@ -6,15 +6,16 @@
 int generator() {
     srand(time(NULL)); 
 
-    int N = rand() % 9 + 5;     // losowa liczba miast od 5 do 14
+    int N = rand() % 9 + 5;     // losowa liczba miast od 5 do 13
     int min_distance = INT_MAX;
+    int max_distance = INT_MIN;
+    int bigger_distance = INT_MIN;
 
     cJSON* root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "N", N);
     cJSON_AddNumberToObject(root, "IT", 100);
-
-    
     cJSON* tsp = cJSON_AddArrayToObject(root, "tsp");
+
     for (int i = 0; i < N; i++) {
         cJSON* row = cJSON_CreateArray();
         cJSON_AddItemToArray(tsp, row);
@@ -30,6 +31,34 @@ int generator() {
             }
         }
     }
+
+    //for (int i = 0; i < N; i++) {                             // rozwiązanie optymalne zakodowane w generowany graf
+    //    cJSON* row = cJSON_CreateArray();
+    //    cJSON_AddItemToArray(tsp, row);
+    //    for (int j = 0; j < N; j++) {
+    //        if (i == j) {
+    //            cJSON_AddItemToArray(row, cJSON_CreateNumber(0));
+    //        }
+    //        else if(j == i+1){
+    //            int optimal_distance = rand() % 101 + 50;
+    //            if (optimal_distance > max_distance)
+    //                max_distance = optimal_distance;
+    //            cJSON_AddItemToArray(row, cJSON_CreateNumber(optimal_distance));
+    //        }
+    //        else if (j > i+1 ){
+    //            int distance = rand() % 150 + max_distance; // Losowa odległość od najlepszej optymalnej długości do 
+    //            if (distance > bigger_distance)
+    //                bigger_distance = distance;
+    //            cJSON_AddItemToArray(row, cJSON_CreateNumber(distance));
+    //        }
+    //        else {
+    //            int distance = rand() % 400 + bigger_distance; // Losowa odległość od najlepszej optymalnej długości do 
+    //            if (distance < min_distance)
+    //                min_distance = distance;
+    //            cJSON_AddItemToArray(row, cJSON_CreateNumber(distance));
+    //        }
+    //    }
+    //}
 
     int fuel_for_one_trip = min_distance * 2;
     int start_fuel = fuel_for_one_trip + rand() % (250 - fuel_for_one_trip + 1); // Losowa ilość paliwa od minimalnej do 250

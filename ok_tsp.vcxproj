@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="cJSON.h" />
     <ClInclude Include="generator.h" />
+    <ClInclude Include="zen_timer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
