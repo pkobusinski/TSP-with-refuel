@@ -3,10 +3,9 @@
 #include <time.h>
 #include "cJSON.h"
 
-int generator() {
-    srand(time(NULL)); 
-
-    int N = rand() % 9 + 5;     // losowa liczba miast od 5 do 13
+int generator( int number) {
+   
+    int N = number;
     int min_distance = INT_MAX;
     int max_distance = INT_MIN;
     int bigger_distance = INT_MIN;

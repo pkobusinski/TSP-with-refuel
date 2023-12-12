@@ -1,28 +1,28 @@
 {
 	"algorithm":	"GreedyTSP",
-	"path":	[0, 4, 5, 7, 10, 9, 6, 3, 1, 8, 2, 0],
-	"path_length":	1611,
+	"path":	[0, 10, 1, 5, 8, 3, 7, 2, 4, 6, 9, 0],
+	"path_length":	1333,
 	"N":	11,
-	"time":	35
+	"time":	66
 }
 {
 	"algorithm":	"RandomGreedyTSP",
-	"path":	[0, 4, 1, 8, 9, 2, 5, 7, 6, 3, 10, 0],
-	"path_length":	1894,
+	"path":	[6, 2, 4, 10, 1, 5, 8, 3, 7, 9, 0, 6],
+	"path_length":	1143,
 	"N":	11,
-	"time":	206
+	"time":	69
 }
 {
 	"algorithm":	"MetaTSP",
-	"path":	[0, 4, 9, 1, 8, 2, 5, 7, 6, 10, 3, 0],
-	"path_length":	1918,
+	"path":	[6, 9, 4, 0, 10, 3, 8, 7, 5, 1, 2, 6],
+	"path_length":	1522,
 	"N":	11,
-	"time":	267
+	"time":	337
 }
 {
 	"algorithm":	"BruteForceTSP",
-	"path":	[0, 4, 6, 5, 7, 3, 10, 8, 1, 9, 2, 0],
-	"path_length":	1173,
+	"path":	[0, 6, 9, 4, 1, 5, 8, 3, 10, 7, 2, 0],
+	"path_length":	1008,
 	"N":	11,
-	"time":	109370
+	"time":	215610
 }
