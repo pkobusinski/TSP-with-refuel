@@ -229,7 +229,7 @@ int greedy_tsp(int* path, int fuel) {
 
     for (int i = 0; i < N; i++) {
         if (unvisited_cities[i] == 1) {
-            free(unvisited_cities); // Zwolnij dynamicznie alokowaną tablicę
+            free(unvisited_cities); 
             return 0;
         }
     }
@@ -250,7 +250,7 @@ int random_greedy_tsp(int* path, int fuel) {
         unvisited_cities[i] = 1;
     }
 
-    // Choose a random starting city
+    
     current_city = rand() % N;
 
     unvisited_cities[current_city] = 0;
@@ -285,7 +285,7 @@ int random_greedy_tsp(int* path, int fuel) {
         unvisited_cities[current_city] = 0;
     }
 
-    path[N] = path[0]; // Return to the starting city
+    path[N] = path[0]; 
     path_length += tsp[current_city][path[0]];
 
     free(unvisited_cities);
@@ -373,34 +373,6 @@ void print_array(int* array, int size) {
 
 }
 
-//int meta_local_search_tsp(int* path, int fuel) {
-//    int* current_path = (int*)malloc((N + 1) * sizeof(int));
-//    int* alternate_path = (int*)malloc((N + 1) * sizeof(int));
-//    copy_array(path, current_path, N + 1);
-//
-//
-//    int length = calculate_path_length(current_path, gas_stations, fuel);
-//
-//    for (int i = 0; i < IT; i++) {
-//        change_path(current_path, alternate_path, N + 1);
-//        if (check_if_route_ok(alternate_path, gas_stations, fuel)) {
-//            int alternate_length = calculate_path_length(alternate_path, gas_stations, fuel);
-//            if (alternate_length < length) {
-//                length = alternate_length;
-//                copy_array(alternate_path, current_path, N + 1);
-//            }
-//        }
-//    }
-//
-//    copy_array(current_path, path, N + 1);
-//
-//
-//
-//    free(alternate_path);
-//    free(current_path);
-//    return length;
-//}
-
 int calculate_path_length_tsp(int* path, int fuel) {
     int length = 0;
     int current_fuel = fuel;
@@ -410,10 +382,10 @@ int calculate_path_length_tsp(int* path, int fuel) {
         int cost = tsp[path[i - 1]][path[i]];
         current_fuel -= cost;
 
-        // Jeśli brakuje paliwa, zatankuj na najbliższej stacji
+        
         if (current_fuel < 0) {
             length += tsp[current_city][path[i]];
-            current_fuel = fuel - cost;  // Tankuj na stacji docelowej
+            current_fuel = fuel - cost;  
         }
         else {
             length += cost;
@@ -422,7 +394,7 @@ int calculate_path_length_tsp(int* path, int fuel) {
         current_city = path[i];
     }
 
-    // Powrót do punktu początkowego
+  
     length += tsp[current_city][0];
 
     return length;
@@ -457,8 +429,6 @@ int meta_local_search_tsp(int* path, int fuel) {
     return length;
 }
 
-
-
 void saveResultToFile(const char* algorithm, int* path, int path_length, int N, int64_t time) {
     cJSON* results = cJSON_CreateObject();
     cJSON_AddStringToObject(results, "algorithm", algorithm);
@@ -489,7 +459,6 @@ void saveResultToFile(const char* algorithm, int* path, int path_length, int N, 
     cJSON_Delete(results); 
     free(json_str);
 }
-
 
 void solve_and_save_results() {
 
@@ -533,88 +502,87 @@ void solve_and_save_results() {
     free(r_greedy_path);
 }
 
-
-
-void save(FILE* file, const char* algorithm, int* path, int path_length, int size, int64_t time) {
-    fprintf(file, "%d;", N);
-    fprintf(file, "%s;", algorithm);
-    fprintf(file, "%d;", path_length);
-    for (int i = 0; i < size; i++) {
-        fprintf(file, "%d,", path[i]);
-    }
-    fprintf(file, ";");
-    fprintf(file, "%lld\n", time);
-}
-
-void solve() {
-
-    FILE* results_file;
-    if (fopen_s(&results_file, "out3.txt", "a") == 0) {
-        printf("Plik out.txt został utworzony.\n");
-    }
-    else {
-        fprintf(stderr, "Błąd podczas otwierania pliku out.txt.\n");
-        return;  
-    }
-    int path_length = 0;
-    int* path = (int*)malloc((N + 1) * sizeof(int));
-    int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
-
-
-    zen_timer_t timer = ZenTimer_Start();
-    path_length = greedy_tsp(path, start_fuel);
-    int64_t time = ZenTimer_End(&timer);
-    save(results_file, "GreedyTSP", path, path_length, N + 1, time);
-    for (int i = 0; i < N + 1; i++) {
-        r_greedy_path[i] = path[i];
-    }
-    if (path_length == 0) {
-        fill_array_with_indices(r_greedy_path, N + 1);
-        shuffle(r_greedy_path, N + 1, 1, 1);
-
-    }
-    zen_timer_t timer_2 = ZenTimer_Start();
-    path_length = random_greedy_tsp(path, start_fuel);
-    int64_t time_2 = ZenTimer_End(&timer_2);
-    save(results_file, "RandomGreedyTSP", path, path_length, N + 1, time_2);
-    
-    zen_timer_t timer_3 = ZenTimer_Start();
-    path_length = meta_local_search_tsp(r_greedy_path, start_fuel);
-    int64_t time_3 = ZenTimer_End(&timer_3);
-    save(results_file, "MetaTSP", r_greedy_path, path_length, N + 1, time_3);
-   
-    zen_timer_t timer_4 = ZenTimer_Start();
-    path_length = bruteforce_tsp(path, start_fuel);
-    int64_t time_4 = ZenTimer_End(&timer_4);
-    save(results_file, "BruteForceTSP", path, path_length, N + 1, time_4);
-   
-    fclose(results_file);  
-    free(path);
-    free(r_greedy_path);
-  
-}
+//void save(FILE* file, const char* algorithm, int* path, int path_length, int size, int64_t time) {
+//    fprintf(file, "%d;", N);
+//    fprintf(file, "%d;", IT);
+//    fprintf(file, "%s;", algorithm);
+//    fprintf(file, "%d;", path_length);
+//    for (int i = 0; i < size; i++) {
+//        fprintf(file, "%d,", path[i]);
+//    }
+//    fprintf(file, ";");
+//    fprintf(file, "%lld\n", time);
+//}
+//
+//void solve() {
+//
+//    FILE* results_file;
+//    if (fopen_s(&results_file, "out_iteracje.txt", "a") == 0) {
+//        printf("Plik out_long.txt został utworzony.\n");
+//    }
+//    else {
+//        fprintf(stderr, "Błąd podczas otwierania pliku out.txt.\n");
+//        return;  
+//    }
+//    int path_length = 0;
+//    int* path = (int*)malloc((N + 1) * sizeof(int));
+//    int* r_greedy_path = (int*)malloc((N + 1) * sizeof(int));
+//
+//
+//    zen_timer_t timer = ZenTimer_Start();
+//    path_length = greedy_tsp(path, start_fuel);
+//    int64_t time = ZenTimer_End(&timer);
+//    //save(results_file, "GreedyTSP", path, path_length, N + 1, time);
+//    for (int i = 0; i < N + 1; i++) {
+//        r_greedy_path[i] = path[i];
+//    }
+//    if (path_length == 0) {
+//        fill_array_with_indices(r_greedy_path, N + 1);
+//        shuffle(r_greedy_path, N + 1, 1, 1);
+//
+//    }
+//    //zen_timer_t timer_2 = ZenTimer_Start();
+//    //path_length = random_greedy_tsp(path, start_fuel);
+//    //int64_t time_2 = ZenTimer_End(&timer_2);
+//    //save(results_file, "RandomGreedyTSP", path, path_length, N + 1, time_2);
+//    
+//    zen_timer_t timer_3 = ZenTimer_Start();
+//    path_length = meta_local_search_tsp(r_greedy_path, start_fuel);
+//    int64_t time_3 = ZenTimer_End(&timer_3);
+//    save(results_file, "MetaTSP", r_greedy_path, path_length, N + 1, time_3);
+//   
+//    //zen_timer_t timer_4 = ZenTimer_Start();
+//    //path_length = bruteforce_tsp(path, start_fuel);
+//    //int64_t time_4 = ZenTimer_End(&timer_4);
+//    //save(results_file, "BruteForceTSP", path, path_length, N + 1, time_4);
+//   
+//    fclose(results_file);  
+//    free(path);
+//    free(r_greedy_path);
+//  
+//}
 
 
 
 int main() {
   
     srand(time(NULL));
+    int num_cities = 7;
+    int num_tests = 2;
 
-
-    for (int j =1; j <2; j++) {
+    for (int j =5; j <=num_cities; j++) {
        
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i < num_tests; i++)
         {
-            generator(7);
+            generator(j);
             initialize();
             //print_data(tsp, gas_stations, N, IT, start_fuel);
-            //solve_and_save_results();
-            solve();
+            solve_and_save_results();
+          //  solve();
             cleanup();
         }
     }
 
-    
     
     return 0;
 }

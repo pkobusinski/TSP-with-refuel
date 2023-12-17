@@ -12,7 +12,7 @@ int generator( int number) {
 
     cJSON* root = cJSON_CreateObject();
     cJSON_AddNumberToObject(root, "N", N);
-    cJSON_AddNumberToObject(root, "IT", 100);
+    cJSON_AddNumberToObject(root, "IT", 1000);
     cJSON* tsp = cJSON_AddArrayToObject(root, "tsp");
 
     for (int i = 0; i < N; i++) {
